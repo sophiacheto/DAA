@@ -1,4 +1,4 @@
-// package contest5.B;
+// package contest5.D;
 
 import java.util.LinkedList;
 import java.util.Scanner;
@@ -156,14 +156,19 @@ class HeapMax {
 
 class Edge {
     public int enode;
-    public int peso;
+    // public int peso;
+    public int limite;
     public int inicio;
     // public int fim;
 
-    Edge(int endv, int v) {
+    Edge(int endv, int limit) {
         enode = endv;
-        peso = v;
+        limite = limit;
     }
+
+    // public void atualizar_limites(int lim) {
+    //     limite = lim;
+    // }
 }
 
 // Class that represents a node
@@ -193,15 +198,31 @@ class Graph {
         for (int i=1; i<=n; i++)
             nodes[i] = new Node();
     }
+
+    // public void new_node(int i) {
+    //     if (nodes[i] == null)
+    //         nodes[i] = new Node();
+    // }
     
     // adds edge from a to b and another from b to a
-    public void addEdge(int a, int b, int value) {
+    public void addEdge(int a, int b, int limit) {
+        // new_node(b);
+        // new_node(a);
         if (!isEdge(a, b)) {
-            nodes[a].adj.add(new Edge(b, value));
-            nodes[b].adj.add(new Edge(a, value));
+            nodes[a].adj.add(new Edge(b,  limit));
+            nodes[b].adj.add(new Edge(a, limit));
             // nodes[b].adj.add(a);
         }
     }
+ 
+    // public void addLimitation(int a, int b, int limite) {
+    //     for (Edge adj : nodes[a].adj)
+    //         if (adj.enode == b)
+    //             adj.atualizar_limites(limite);
+    //     for (Edge adj : nodes[b].adj)
+    //         if (adj.enode == a)
+    //             adj.atualizar_limites(limite);
+    // }
 
     // checks whether {a,b} is an edge
     public boolean isEdge(int a,int b) {
@@ -216,59 +237,107 @@ class Graph {
 	    nodes[i].visited = false;
     }
  
-    // public void prepararGraus(int v) {
+    public int find(int origem, int destino, int max) {
+        int[] capacidades = new int[n+1];
+
+        for (int i=1; i<=n; i++) 
+            capacidades[i] = -1;
+         
+        capacidades[origem] = max;
+        HeapMax heap = new HeapMax(capacidades, n);
+
         
-    // }
-
-    public void prim(int custo_ramo) {
-        int resultado = custo_ramo - 1;
-        int[] custos = new int[n+1];
-
-        for (int i=1; i<=n; i++)
-            custos[i] = 0;
-
-        custos[1] = 1;
-        nodes[1].pai = 1;
-        HeapMax heap = new HeapMax(custos, n);
-
         while (!heap.isEmpty()) {
             int curr = heap.extractMax();
-            // System.out.println(nodes[curr].pai + " --> " + curr + " (" + custos[curr] + ")");
-            if (custos[curr] == 0) {
-                System.out.println("impossivel");
-                return;
-            }
-            resultado += custos[curr] - custo_ramo;
+
+            // System.out.println("PAI: " + curr + " --------");
+
+            // já percorri todos os conexos e o nó seguinte é inalcançável
+            if (capacidades[curr]==-1) break;
             nodes[curr].visited = true;
+
             for (Edge e : nodes[curr].adj) {
                 int filho = e.enode;
+
                 if (nodes[filho].visited) continue;
 
-                if (custos[filho] < e.peso) {
-                    nodes[filho].pai = curr;
-                    custos[filho] = e.peso;
-                    heap.increaseKey(filho, e.peso);
-                }
-            }
-        }
+                // if (e.altura == -1 && e.largura == -1 && capacidades[filho] < capacidades[curr]) {
+                //     capacidades[filho] = capacidades[curr];
+                //     heap.increaseKey(filho, capacidades[curr]);
+                //     continue;
+                // }
 
-        System.out.println("rendimento optimo: " + resultado);
+                // System.out.println("No " + filho + ": (" + e.limite + ")");
+
+                int possivel_nova_capacidade = min(capacidades[curr], e.limite);
+                if (capacidades[filho] < possivel_nova_capacidade) {
+                    capacidades[filho] = possivel_nova_capacidade;
+                    heap.increaseKey(filho, possivel_nova_capacidade);
+                }
+            }   
+        }  
+
+        // int qtd=0;
+        // for (int i=1; i<=n; i++)  {
+        //     // nao alcançaveis
+        //     if (capacidades[i] == -1)
+        //         capacidades[i] = 0;
+            
+        //     // capacidade menor que o mínimo 
+        //     if (capacidades[i] <= min)
+        //         capacidades[i] = 0;
+
+        //     // não printar origem, nem sem limitações, nem limitações dentro do esperado
+        //     if (i!=origem && capacidades[i] < max) {
+        //         System.out.println("No " + i + ": " + capacidades[i]);
+        //         qtd++;
+        //     }
+        // }
+        if (capacidades[destino] == -1)
+            System.out.println(0);
+        else if (capacidades[destino] >= max)
+            System.out.println(max);
+        else 
+            System.out.println(capacidades[destino]);
+        return 0;
+    }
+
+    public int min(int a, int b) {
+        if (a<b)
+            return a;
+        return b;
     }
 }
 
-public class Minimalista {
+public class Encomenda {
     public static void main(String[] args) {
         Scanner scan = new Scanner(System.in);
-        
-        int qtd_nos = scan.nextInt();
-        int qtd_ramos = scan.nextInt();
-        int custo = scan.nextInt();
 
-        Graph rede = new Graph(qtd_nos);
+        int largura_min = scan.nextInt();
+        int largura_max = scan.nextInt();
+        int comprimento_min = scan.nextInt();
+        int comprimento_max = scan.nextInt();
+        int altura_min = scan.nextInt();
 
-        for (int i=0; i<qtd_ramos; i++) 
-            rede.addEdge(scan.nextInt(), scan.nextInt(), scan.nextInt());
-        
-        rede.prim(custo);
-    }
+        int origem = scan.nextInt();
+        int destino = scan.nextInt();
+
+        Graph grafo = new Graph(1000);
+        while (true) {
+            int a = scan.nextInt();
+            if (a == -1) break;
+            int b = scan.nextInt();
+            int largura = scan.nextInt();
+            int comprimento = scan.nextInt();
+            int altura = scan.nextInt();
+
+            if (largura < largura_min || comprimento < comprimento_min || altura < altura_min) continue;
+
+            grafo.addEdge(a, b, comprimento);
+        }
+
+        grafo.find(origem, destino, comprimento_max);
+
+
+    }   
 }
